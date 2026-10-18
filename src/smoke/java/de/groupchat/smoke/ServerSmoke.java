@@ -139,6 +139,19 @@ public final class ServerSmoke implements ModInitializer {
         check(owner.connection.messages.size() == ownerBefore, "Former group does not receive it either");
         check(publicChat(alice, "now public"), "Focus cleared after losing membership");
         fail(d, owner.source, "gc create Focus");
+        // Review fixes: no tab traffic per chat message, team formatting kept, no reply action onto subcommands.
+        long infoBefore = alice.connection.packets.stream().filter(p -> p instanceof net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket).count();
+        ok(d, owner.source, "gc WithoutLogs no tab refresh for chat");
+        check(alice.connection.packets.stream().filter(p -> p instanceof net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket).count() == infoBefore, "Chat messages do not resend the tab list");
+        var team = server.getScoreboard().addPlayerTeam("gcsmoke");
+        team.setPlayerPrefix(Component.literal("<T> "));
+        server.getScoreboard().addPlayerToTeam("GcOwner", team);
+        ok(d, owner.source, "gc invite WithoutLogs GcOutside"); ok(d, outside.source, "gc accept WithoutLogs");
+        check("[WithoutLogs] <T> GcOwner".equals(outside.connection.tabName(ownerId)), "Tag keeps scoreboard team prefix: " + outside.connection.tabName(ownerId));
+        var reserved = de.groupchat.fabric.ChatText.message("Mute", new de.groupchat.core.GroupService.PreferenceView(null, "white", false), "x", "y");
+        check(spans(reserved).stream().noneMatch(s -> s.style.getClickEvent() != null), "No reply action for a group named like a subcommand");
+        var aliased = de.groupchat.fabric.ChatText.message("Mute", new de.groupchat.core.GroupService.PreferenceView("m", "white", false), "x", "y");
+        check(spans(aliased).stream().anyMatch(s -> new ClickEvent.SuggestCommand("/gc m ").equals(s.style.getClickEvent())), "Alias reply still offered for such a group");
     }
     static void run(MinecraftServer server) throws Exception {
         var mod = FabricLoader.getInstance().getEntrypoints("main", ModInitializer.class).stream()

@@ -12,10 +12,15 @@ public final class ChatText {
     private ChatText() {}
     public static MutableComponent message(String group, GroupService.PreferenceView preference, String sender, String message) {
         var color = ChatFormatting.valueOf(preference.color().toUpperCase(Locale.ROOT));
-        String reply = "/gc " + (preference.alias() != null ? preference.alias() : group) + " ";
-        MutableComponent result = Component.empty().withStyle(style -> style.withColor(color).withBold(false)
-                .withClickEvent(new ClickEvent.SuggestCommand(reply))
-                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to reply in " + group))));
+        String target = preference.alias() != null ? preference.alias() : group;
+        // A legacy group named like a subcommand (e.g. "mute") can only be reached through an alias.
+        boolean canReply = !GroupService.RESERVED.contains(GroupService.key(target));
+        MutableComponent result = Component.empty().withStyle(style -> {
+            var base = style.withColor(color).withBold(false);
+            return canReply ? base.withClickEvent(new ClickEvent.SuggestCommand("/gc " + target + " "))
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to reply in " + group)))
+                    : base.withHoverEvent(new HoverEvent.ShowText(Component.literal("Set an alias with /gc shorten " + group + " <alias> to reply")));
+        });
         result.append(Component.literal("[")).append(Component.literal(group).withStyle(style -> style.withBold(true))).append("] ");
         if (preference.alias() != null) result.append("[" + preference.alias() + "] ");
         return result.append(sender + ": " + message);

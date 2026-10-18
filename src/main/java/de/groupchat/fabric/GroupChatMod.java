@@ -87,7 +87,8 @@ public final class GroupChatMod implements ModInitializer {
     }
     /**
      * Sends each online player a private view of the tab list where fellow group members carry the viewer's group tags.
-     * ponytail: resends every pair (O(players²)) after any successful /gc command and on join; fine for SMP sizes.
+     * ponytail: resends every pair (O(players²)) on join and after tag-changing /gc commands; fine for SMP sizes.
+     * Team changes made later (e.g. /team join) show up at the next refresh; hook scoreboard changes if that matters.
      * Tab-list mods that rewrite display names later will overwrite these tags.
      */
     public void refreshTabs(MinecraftServer server) {
@@ -100,7 +101,10 @@ public final class GroupChatMod implements ModInitializer {
             var entries = packet.entries().stream().map(e -> {
                 var tag = ChatText.tabTag(groups, g -> service.preference(viewer.getUUID(), g.id()), e.profileId());
                 if (tag == null) return e;
-                var name = e.displayName() != null ? e.displayName() : net.minecraft.network.chat.Component.literal(e.profile().name());
+                // Vanilla formats a null display name with the scoreboard team on the client; keep that once we set one.
+                var target = server.getPlayerList().getPlayer(e.profileId());
+                var name = e.displayName() != null ? e.displayName() : net.minecraft.world.scores.PlayerTeam.formatNameForTeam(
+                        target == null ? null : target.getTeam(), net.minecraft.network.chat.Component.literal(e.profile().name()));
                 return new ClientboundPlayerInfoUpdatePacket.Entry(e.profileId(), e.profile(), e.listed(), e.latency(), e.gameMode(),
                         tag.append(name), e.showHat(), e.listOrder(), e.chatSession());
             }).toList();

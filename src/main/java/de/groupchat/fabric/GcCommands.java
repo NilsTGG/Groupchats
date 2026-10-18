@@ -35,7 +35,9 @@ public final class GcCommands {
                 if (!(permission.equals("admin") ? admin(context.getSource()) : GroupPermissions.allowed(context.getSource(), permission)))
                     throw new GcException("You do not have permission to use this command.");
                 action.run(context);
-                mod.refreshTabs(context.getSource().getServer());
+                // Only these change who shares a group or how tags look.
+                if (Set.of("create", "rename", "accept", "leave", "kick", "shorten", "color", "delete", "admin.delete").contains(permission))
+                    mod.refreshTabs(context.getSource().getServer());
                 return 1;
             }
             catch (GcException e) { context.getSource().sendFailure(Component.literal("[GC] " + e.getMessage())); return 0; }
