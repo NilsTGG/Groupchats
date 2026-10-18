@@ -24,7 +24,7 @@ public final class GcCommands {
     public GcCommands(GroupChatMod mod) { this.mod = mod; }
     private GroupService service() { return mod.service(); }
     private final Map<UUID, UUID> pendingLimits = new HashMap<>();
-    // ponytail: focus is runtime-only and resets on restart; persist it in State if players ask.
+    // Focus mode is runtime-only and resets on restart.
     private final Map<UUID, UUID> focus = new HashMap<>();
     private enum Scope { MEMBER, MANAGER, OWNER, INVITATION, ADMIN }
     @FunctionalInterface private interface Action { void run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException; }

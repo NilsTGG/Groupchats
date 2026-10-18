@@ -87,7 +87,7 @@ public final class GroupChatMod implements ModInitializer {
     }
     /**
      * Sends each online player a private view of the tab list where fellow group members carry the viewer's group tags.
-     * ponytail: resends every pair (O(players²)) on join and after tag-changing /gc commands; fine for SMP sizes.
+     * Resends every player pair on join and after tag-changing /gc commands.
      * Team changes made later (e.g. /team join) show up at the next refresh; hook scoreboard changes if that matters.
      * Tab-list mods that rewrite display names later will overwrite these tags.
      */
